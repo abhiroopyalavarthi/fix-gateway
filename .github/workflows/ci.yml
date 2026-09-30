@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true   # orderbook/ is the limit-order-book repo
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build (QuickFIX from source, gateway, client, fixlog, tests)
+        run: cmake --build build -j 4
+      - name: Unit + session tests
+        run: ctest --test-dir build --output-on-failure
+      - name: Kill -9 / resend demo
+        run: scripts/recovery_demo.sh build

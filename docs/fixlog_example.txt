@@ -1,0 +1,33 @@
+$ fixlog order FLOW-1 log/gateway/FIX.4.4-GATEWAY-CLIENT1.messages.current.log
+20260930-03:46:34.020438000  CLIENT1 -> GATEWAY  seq 2  NewOrderSingle buy 300 AAPL @ 338.00
+20260930-03:46:34.022043000  GATEWAY -> CLIENT1  seq 2  ExecutionReport New status=New cum=0 leaves=300
+20260930-03:46:38.165588000  GATEWAY -> CLIENT1  seq 4  ExecutionReport Trade status=PartiallyFilled 100@338.00 cum=100 leaves=200 avg=338.000000  [PossDup]
+20260930-03:46:38.168517000  CLIENT1 -> GATEWAY  seq 6  OrderCancelReplaceRequest buy 250 AAPL @ 338.00 (replaces FLOW-1)
+20260930-03:46:38.171818000  GATEWAY -> CLIENT1  seq 6  ExecutionReport Replaced status=PartiallyFilled cum=100 leaves=150 avg=338.000000
+20260930-03:46:42.293986000  GATEWAY -> CLIENT1  seq 8  ExecutionReport Trade status=PartiallyFilled 50@338.00 cum=150 leaves=100 avg=338.000000  [PossDup]
+20260930-03:46:42.296864000  CLIENT1 -> GATEWAY  seq 10  OrderCancelRequest cancel FLOW-1b
+20260930-03:46:42.300212000  GATEWAY -> CLIENT1  seq 10  ExecutionReport Canceled status=Canceled cum=150 leaves=0 avg=338.000000
+20260930-03:46:44.359655000  CLIENT1 -> GATEWAY  seq 13  OrderCancelRequest cancel FLOW-1b
+20260930-03:46:44.361659000  GATEWAY -> CLIENT1  seq 13  OrderCancelReject for FLOW-1b (cancel)  "too late to cancel: order is canceled"
+
+$ fixlog why FLOW-1 log/gateway/FIX.4.4-GATEWAY-CLIENT1.messages.current.log
+FLOW-1: NewOrderSingle buy 300 AAPL @ 338.00, received 20260930-03:46:34.020438000 from CLIENT1.
+Replace requested 20260930-03:46:38.168517000: OrderCancelReplaceRequest buy 250 AAPL @ 338.00 (replaces FLOW-1).
+A cancel was refused 20260930-03:46:44.361659000: "too late to cancel: order is canceled".
+CANCELED 20260930-03:46:42.300212000 with 150 filled, by the client's cancel request FLOW-1c sent 20260930-03:46:42.296864000.
+
+$ fixlog why FLOW-2 log/gateway/FIX.4.4-GATEWAY-CLIENT1.messages.current.log log/gateway/FIX.4.4-GATEWAY-CLIENT2.messages.current.log
+FLOW-2: NewOrderSingle buy 100 AAPL @ 337.00, received 20260930-03:46:46.430331000 from CLIENT1.
+STILL WORKING (New): 0 filled, 100 resting at 337.00 as of 20260930-03:46:46.432316000.
+No AAPL trades show up in this log after that, so nothing traded at or through its price.
+
+$ fixlog rejects log/gateway/FIX.4.4-GATEWAY-CLIENT1.messages.current.log
+20260930-03:46:44.361659000  GATEWAY -> CLIENT1  cancel FLOW-1d of FLOW-1b refused: "too late to cancel: order is canceled"
+20260930-03:46:50.561700000  GATEWAY -> CLIENT1  order BIG-1 rejected: "notional 6760000.00 exceeds max 5000000.00"
+20260930-03:46:52.620278000  GATEWAY -> CLIENT1  order ODD-1 rejected: "price '338.005' is not a positive price on the 0.01 tick grid"
+
+$ fixlog summary log/gateway/FIX.4.4-GATEWAY-CLIENT1.messages.current.log
+48 messages, 20260930-03:46:34.013363000 to 20260930-03:46:53.624625000
+4 orders, 2 fill reports, 2 rejected
+CLIENT1 -> GATEWAY:  Logon=7  Logout=7  NewOrderSingle=4  OrderCancelReplaceRequest=1  OrderCancelRequest=2  ResendRequest=2
+GATEWAY -> CLIENT1:  ExecutionReport=8  Logon=7  Logout=7  OrderCancelReject=1  SequenceReset=2

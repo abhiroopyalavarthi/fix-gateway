@@ -1,0 +1,26 @@
+== CLIENT1 buys, CLIENT2 sells, 2000 orders each
+== kill -9 CLIENT1 after 135 orders; CLIENT2 keeps filling its resting buys
+== restarting CLIENT1
+resuming after CLIENT1-135 (re-sent it with PossResend=Y)
+reports 3923, resent by gateway 191, duplicates dropped 0, orders 2000
+
+== does CLIENT1 agree with the gateway about every order?
+yes: 2000 orders, identical status/cum/leaves/avgPx on both sides
+gateway booked 2000 CLIENT1 orders, 2000 distinct ClOrdIDs (expected 2000): nothing lost or duplicated
+
+== sequence numbers in the gateway's CLIENT1 log
+20260930-03:49:11.830417000  GATEWAY -> CLIENT1 gap: expected 82, got 270 (188 missing)
+20260930-03:49:11.839669000  CLIENT1 asked GATEWAY to resend 79..latest
+GATEWAY -> CLIENT1: 192 messages resent with PossDupFlag=Y
+OK: no unrecovered sequence gaps
+
+== an order over the 50,000 share limit
+BIG-1  OrdStatus=8 ExecType=8 cum=0 leaves=0 avgPx=0.0000 order qty 60000 exceeds max 50000
+BIG-1: NewOrderSingle buy 60000 AAPL @ 338.00, received 20260930-03:49:41.045211000 from CLIENT1.
+REJECTED 20260930-03:49:41.046702000: "order qty 60000 exceeds max 50000".
+It never reached the book.
+
+== kill switch on CLIENT2
+REST-3  OrdStatus=8 ExecType=8 cum=0 leaves=0 avgPx=0.0000 kill switch active for CLIENT2
+REST-1: NewOrderSingle sell 100 AAPL @ 343.00, received 20260930-03:49:43.123652000 from CLIENT2.
+CANCELED 20260930-03:49:47.757892000 with 0 filled, by the kill switch.
