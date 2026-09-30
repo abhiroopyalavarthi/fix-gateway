@@ -218,19 +218,19 @@ per direction and tells a gap that was filled by a resend apart from one that ne
 fills it), so every order goes through the whole path: FIX parse and validation, the queue, risk,
 the book, a trade, and execution reports back. Latency is order-to-ack, from the client calling
 send to the client receiving the first ExecutionReport, measured one order at a time. Throughput
-is with up to 64 orders in flight. 20,000 orders after 1,000 warm-up, Linux VM on an M2 MacBook Pro:
+is with up to 64 orders in flight. 50,000 orders after 1,000 warm-up, on an M2 MacBook Pro:
 
 | Setup | p50 | p90 | p99 | p99.9 | Throughput |
 |---|--:|--:|--:|--:|--:|
-| FileStore + FileLog (the real setup) | 92 µs | 105 µs | 148 µs | 633 µs | 25,478 orders/s |
-| MemoryStore, no log | 75 µs | 81 µs | 101 µs | 168 µs | 74,121 orders/s |
+| FileStore + FileLog (the real setup) | 93.7 µs | 109.2 µs | 220.1 µs | 404.4 µs | 12,252 orders/s |
+| MemoryStore, no log | 49.3 µs | 54.9 µs | 103.0 µs | 188.5 µs | 58,349 orders/s |
 
 Almost none of the time is in the book, which does about 29.5M operations a second on its own. Per order it goes
 to: parsing and validating the FIX message against the data dictionary, waking the engine thread
 through a mutex and condition variable, building the execution report, and on each side writing
 the message to the store and the log before it goes out. Persistence is what the second row takes
-away: it barely moves the median but cuts throughput to a third, because every message is a file
-write on both sides.
+away: it roughly halves the median and cuts throughput by almost 5x, because every message is a
+file write on both sides. That's the price of being able to resume a session after a crash.
 
 ## Trading the Python algos through it
 

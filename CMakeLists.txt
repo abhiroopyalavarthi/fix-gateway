@@ -51,6 +51,11 @@ add_library(gateway_fix STATIC src/FixConvert.cpp src/Gateway.cpp client/FixClie
 target_include_directories(gateway_fix PUBLIC include client)
 target_link_libraries(gateway_fix PUBLIC gateway_core qf)
 target_compile_options(gateway_fix PRIVATE -Wall -Wextra)
+# QuickFIX's MessageCracker has an onMessage per message type per FIX version; overriding
+# the three we handle "hides" the rest, which is exactly what we want, so clang's warning is noise
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_compile_options(gateway_fix PUBLIC -Wno-overloaded-virtual)
+endif()
 
 add_executable(fix_gateway src/main.cpp)
 target_link_libraries(fix_gateway gateway_fix)
