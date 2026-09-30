@@ -1,0 +1,8 @@
+build/
+build-*/
+# QuickFIX session state and logs from running the gateway / clients locally
+store/
+log/
+demo/
+.cache/
+compile_commands.json
